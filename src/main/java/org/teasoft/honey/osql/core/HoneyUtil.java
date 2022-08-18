@@ -42,12 +42,12 @@ import org.teasoft.honey.util.StringUtils;
 public final class HoneyUtil {
 
 	private static final String STRING = "String";
-	private static Map<String, String> jdbcTypeMap = new HashMap<>(); 
+	private static Map<String, String> jdbcTypeMap = new HashMap<>();
 	private static Map<String, Integer> javaTypeMap = new HashMap<>();
 
 	private static PropertiesReader jdbcTypeCustomProp = new PropertiesReader("/jdbcTypeToFieldType.properties");
 	private static PropertiesReader jdbcTypeCustomProp_specificalDB = null;
-	
+
 	private static String SET_WRONG_VALUE_IN="Annotation JoinTable set wrong value in ";
 
 	static {
@@ -57,15 +57,15 @@ public final class HoneyUtil {
 	static void refreshTypeMapConfig() {
 		initTypeMapConfig();
 	}
-	
+
 	private HoneyUtil() {}
-	
+
 	private static void initTypeMapConfig() {
 		String proFileName = "/jdbcTypeToFieldType-{DbName}.properties";
-		
+
 		initJdbcTypeMap();
 		appendJdbcTypeCustomProp();
-		
+
 		String dbName = HoneyConfig.getHoneyConfig().getDbName();
 		if (dbName != null) {
 			jdbcTypeCustomProp_specificalDB = new PropertiesReader(proFileName.replace("{DbName}", dbName));
@@ -73,13 +73,13 @@ public final class HoneyUtil {
 		}
 
 		initJavaTypeMap();
-		
+
 		SetParaTypeConverterRegistry.register(java.util.Date.class, new UtilDotDateTypeToTimestampConvert<java.util.Date>(), DatabaseConst.ORACLE);
 		SetParaTypeConverterRegistry.register(java.util.Date.class, new UtilDotDateTypeToTimestampConvert<java.util.Date>(), DatabaseConst.PostgreSQL);
 		SetParaTypeConverterRegistry.register(java.util.Date.class, new UtilDotDateTypeToTimestampConvert<java.util.Date>(), DatabaseConst.H2);
 		SetParaTypeConverterRegistry.register(java.util.Date.class, new UtilDotDateTypeToTimestampConvert<java.util.Date>(), DatabaseConst.MYSQL);
 		SetParaTypeConverterRegistry.register(java.util.Date.class, new UtilDotDateTypeConvert<java.util.Date>());
-		
+
 		TypeHandlerRegistry.register(char.class, new CharTypeHandler<Character>(),true);
 	}
 
@@ -103,13 +103,13 @@ public final class HoneyUtil {
 			}else {
 			   s.append(NameTranslateHandle.toColumnName(field[i].getName(),entityClass));
 			}
-			
+
 		}
 		return s.toString();
 	}
-	
+
 	private static String getJustFetchColumn(Field field) {
-		
+
 		String expression = getJustFetchDefineName(field);
 		String c = "";
 		String fName = NameTranslateHandle.toColumnName(field.getName());
@@ -121,16 +121,16 @@ public final class HoneyUtil {
 
 		return c;
 	}
-	
+
 	private static String getJustFetchDefineName(Field field) {
 		JustFetch justFetch= field.getAnnotation(JustFetch.class);
 		String expression=justFetch.value();
-		
+
 		checkExpression(expression);
-		
+
 		return expression;
 	}
-	
+
 	private static void checkExpression(String expression){
 		if(Check.isNotValidExpressionForJustFetch(expression)) {
 			throw new BeeIllegalSQLException("The expression: '"+expression+ "' is invalid in JustFetch Annotation!");
@@ -138,22 +138,22 @@ public final class HoneyUtil {
 	}
 
 	static <T> MoreTableStruct[] getMoreTableStructAndCheckBefore(T entity) {
-		
-		
+
+
 		String packageAndClassName = entity.getClass().getName();
-		String key = "ForMoreTable:" + packageAndClassName; //ForMoreTable  
-		
+		String key = "ForMoreTable:" + packageAndClassName; //ForMoreTable
+
 //		String key = "ForMoreTable:" +tableName+":"+ packageAndClassName; //ForMoreTable  
 		//是否会受多表有Table标签影响??? 不会. 是包名+类名.不是表名,也没有解析标签. 不管是否有标签,对应的Javabean结构都一样的.
 		//但解析的查询字段(带表名时,因为注解的原因,可能不一样)不一样,所以不能混在一起
 		//在sqlLib用后删除. 因从表的字段也有可能带表名(而该表名有动态参数解析.)
-		
+
 		MoreTableStruct moreTableStruct[] =null;
-		
+
 		if(OneTimeParameter.isTrue(StringConst.MoreStruct_to_SqlLib)) {
 			moreTableStruct = _getMoreTableStructAndCheckBefore(entity);
 			OneTimeParameter.setAttribute(key, moreTableStruct);
-			
+
 			if (moreTableStruct[1] == null) { //v1.9
 				throw new BeeErrorGrammarException(
 						"MoreTable select on " + entity.getClass().getName() + " must own at least one JoinTable annotation!");
@@ -164,32 +164,32 @@ public final class HoneyUtil {
 
 		return moreTableStruct;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	private static <T> MoreTableStruct[] _getMoreTableStructAndCheckBefore(T entity) {
 
 		if (entity == null) return null;
 
 		String entityFullName = entity.getClass().getName();
-		
+
 		Field field[] = entity.getClass().getDeclaredFields();
 
 		MoreTableStruct moreTableStruct[] = new MoreTableStruct[3];
 		moreTableStruct[0] = new MoreTableStruct();
 		Field subField[] = new Field[2];
 		int subEntityFieldNum = 0;
-		
+
 		Set<String> mainFieldSet =new HashSet<>();
 		Map<String,String> dulMap=new HashMap<>();
-		
+
 		//V1.9
 		String tableName = (String) OneTimeParameter.getAttribute(StringConst.TABLE_NAME);
 		if (tableName == null) {
 			tableName = _toTableName(entity);
 		}
-		
+
 		StringBuffer columns = new StringBuffer();
-		
+
 //		StringBuffer listcolumns = new StringBuffer();
 //		String listEntityFullName="";
 //		Class subClass=null;
@@ -197,9 +197,9 @@ public final class HoneyUtil {
 		List listTwo=null;
 		Class list_T_classOne=null;
 		Class list_T_classTwo=null;
-		boolean subOneIsList=false; 
-		boolean subTwoIsList=false; 
-		
+		boolean subOneIsList=false;
+		boolean subTwoIsList=false;
+
 		int len = field.length;
 		boolean isFirst = true;
 //		String listStr="";
@@ -211,7 +211,7 @@ public final class HoneyUtil {
 				subEntityFieldNum++;
 				if (subEntityFieldNum == 1) subField[0] = field[i];
 				if (subEntityFieldNum == 2) subField[1] = field[i];
-				
+
 //				if("java.util.List".equals(field[i].getType().getName())) {
 //				if(field[i].getType().isAssignableFrom(List.class)) {
 				if(List.class.isAssignableFrom(field[i].getType())) {
@@ -223,15 +223,15 @@ public final class HoneyUtil {
 							List list = (List) field[i].get(entity);
 							listOne = list;
 							if (ObjectUtils.isNotEmpty(list)) {
-								list_T_classOne = list.get(0).getClass(); 
-							} 
+								list_T_classOne = list.get(0).getClass();
+							}
 						}else if (subEntityFieldNum == 2) {
 							subTwoIsList = true;
 							moreTableStruct[0].subTwoIsList = true;
 							List list = (List) field[i].get(entity);
 							listTwo = list;
 							if (ObjectUtils.isNotEmpty(list)) {
-								list_T_classTwo = list.get(0).getClass(); 
+								list_T_classTwo = list.get(0).getClass();
 							}
 						}
 					} catch (IllegalAccessException e) {
@@ -239,7 +239,7 @@ public final class HoneyUtil {
 						Logger.warn(e.getMessage());
 					}
 				}
-				
+
 				continue;
 			}
 			if (isFirst) {
@@ -249,9 +249,9 @@ public final class HoneyUtil {
 			}
 			columns.append(tableName);
 			columns.append(".");
-			
+
 			mailField=NameTranslateHandle.toColumnName(field[i].getName(),entity.getClass());
-			columns.append(mailField);  
+			columns.append(mailField);
 //			moreTableStruct[0].mainColumnsForListType=columns.toString(); //v1.9.8
 			mainFieldSet.add(mailField);  //v1.8
 		}// (main table) for end
@@ -262,7 +262,7 @@ public final class HoneyUtil {
 
 		JoinTable joinTable[] = new JoinTable[2];
 		String subTableName[] = new String[2];
-		
+
 		if (subField[0] != null) {
 			joinTable[0] = subField[0].getAnnotation(JoinTable.class);
 
@@ -270,11 +270,11 @@ public final class HoneyUtil {
 			if (!"".equals(errorMsg)) {
 				throw new JoinTableParameterException("Error: mainField and subField can not just use only one." + errorMsg);
 			}
-			
+
 			if(subOneIsList && joinTable[0].joinType()==JoinType.RIGHT_JOIN){
 				throw new JoinTableException("The List type subTable donot support JoinType.RIGHT_JOIN, you can adjust with JoinType.LEFT_JOIN.");
 			}
-			
+
 			if (subOneIsList && list_T_classOne == null) {
 				Class c=joinTable[0].subClazz();
 //				if(! "java.lang.Object".equals(c.getName())) {//V1.11
@@ -288,10 +288,10 @@ public final class HoneyUtil {
 		}
 
 		//支持两个left join/right join要修改
-		//closed on v1.9.8 
+		//closed on v1.9.8
 //		if(subEntityFieldNum==2)
 //		       throw new JoinTableException("Just support JoinType.JOIN in this version when a entity has two JoinTable annotation fields!");
-		
+
 		//v1.9.8 主表只有一个从表时,检测从表1是否还有从表.
 		boolean oneHasOne=false;
 		StringBuffer subColumnStringBuffer[]=new StringBuffer[2];
@@ -301,10 +301,10 @@ public final class HoneyUtil {
 			if (StringUtils.isNotBlank(t_subAlias)) {
 				useSubTableName = t_subAlias;
 			} else {
-				subTableName[0]=_toTableNameByEntityName(subField[0].getType().getName()); 
+				subTableName[0]=_toTableNameByEntityName(subField[0].getType().getName());
 				useSubTableName = subTableName[0];
 			}
-			
+
 			//V1.11 fixed bug
 			boolean checkOneHasOne;
 			if(entity.getClass().equals(subField[0].getType())) { //同一个表自我关联
@@ -313,52 +313,52 @@ public final class HoneyUtil {
 				checkOneHasOne=true;
 			}
 			subColumnStringBuffer[0] = _getBeanFullField_0(subField[0].getType(), useSubTableName,entityFullName,mainFieldSet,dulMap,checkOneHasOne);
-			
+
 		}else if(subEntityFieldNum==1 && subOneIsList) { //从表1是List类型
-			
+
 			String t_subAlias = joinTable[0].subAlias();
 			String useSubTableName;
 			if (StringUtils.isNotBlank(t_subAlias)) {
 				useSubTableName = t_subAlias;
 			} else {
-				subTableName[0]=_toTableNameByEntityName(list_T_classOne.getName()); 
+				subTableName[0]=_toTableNameByEntityName(list_T_classOne.getName());
 				useSubTableName = subTableName[0];
 			}
 //			Field ff[]=list_T_classOne.getDeclaredFields();
 			subColumnStringBuffer[0] = _getBeanFullField_0(list_T_classOne, useSubTableName,entityFullName,mainFieldSet,dulMap,true);
 		}
-		
+
 		//处理从表1返回的从表字段
 		if (subEntityFieldNum == 1) {
 			//子表首个JoinTable注解字段
-			subField[1] = (Field) OneTimeParameter.getAttribute(StringConst.SUBENTITY_FIRSTANNOTATION_FIELD); 
+			subField[1] = (Field) OneTimeParameter.getAttribute(StringConst.SUBENTITY_FIRSTANNOTATION_FIELD);
 			if (subField[1] != null) {
 				subEntityFieldNum = 2; //v1.9.8  在主表只有从表1, 从表1也只有1个从表.   调整为2
 				oneHasOne = true;
 				moreTableStruct[0].oneHasOne = true;
 			}
 		}
-		
+
 		if (subField[1] != null) {
 			joinTable[1] = subField[1].getAnnotation(JoinTable.class);
-			
+
 			//之前的subTwoIsList为主表下的从表的  oneHasOne时,在此处再作判断
 //			if (oneHasOne && "java.util.List".equals(subField[1].getType().getName())) {
 //			if (oneHasOne && subField[1].getType().isAssignableFrom(List.class)) {
 			if (oneHasOne && List.class.isAssignableFrom(subField[1].getType())) {
-				subTwoIsList = true; 
+				subTwoIsList = true;
 			}
 
 			String errorMsg = checkJoinTable(joinTable[1]);
 			if (!"".equals(errorMsg)) {
 				throw new JoinTableParameterException("Annotation JoinTable, error: mainField and subField can not just use only one." + errorMsg);
 			}
-			
-			if(subTwoIsList && joinTable[1].joinType()==JoinType.RIGHT_JOIN){  
+
+			if(subTwoIsList && joinTable[1].joinType()==JoinType.RIGHT_JOIN){
 				throw new JoinTableException("The List type subTable donot support JoinType.RIGHT_JOIN, you can adjust with JoinType.LEFT_JOIN.");
 			}
 		}
-		
+
 		//if no exception , set for main table
 		moreTableStruct[0].tableName = tableName;
 //		moreTableStruct[0].entityFullName = entityFullName;
@@ -370,11 +370,11 @@ public final class HoneyUtil {
 		//开始全面检测,处理两个从表
 		for (int j = 0; j < 2; j++) { // 2 subTables
 			if (subField[j] != null) {
-				
+
 //				j==0时此处不执行
 				//返回的subField[1]是List, 要特别处理
 				if(j==1) {  //要等从表1的subObject对象处理完, 再处理从表2的
-					//处理是List oneHasOne字段  
+					//处理是List oneHasOne字段
 					if (oneHasOne && subTwoIsList) {
 						try {
 							subField[1].setAccessible(true);
@@ -393,7 +393,7 @@ public final class HoneyUtil {
 							Logger.warn(e.getMessage());
 						}
 					}
-					
+
 					if (subTwoIsList && list_T_classTwo == null) {
 						Class c=joinTable[1].subClazz();
 //						if(! "java.lang.Object".equals(c.getName())) {//V1.11
@@ -408,7 +408,7 @@ public final class HoneyUtil {
 
 				String mainColumn = _toColumnName(joinTable[j].mainField());
 				String subColumn = _toColumnName(joinTable[j].subField());
-				
+
 				if (j == 0 && subOneIsList) {
 					subTableName[j] = _toTableNameByEntityName(list_T_classOne.getName());
 				} else if (j == 1 && subTwoIsList) {
@@ -417,11 +417,11 @@ public final class HoneyUtil {
 //				    subTableName[j] = _toTableNameByEntityName(subField[j].getType().getSimpleName());
 					subTableName[j] = _toTableNameByEntityName(subField[j].getType().getName()); //从表可能有注解,要用包名去检查
 				}
-				
+
 				moreTableStruct[1 + j] = new MoreTableStruct();
-				//从表的  
+				//从表的
 				moreTableStruct[1 + j].subEntityField = subField[j];  //用于返回拼装数据时,获取字段名
-				
+
 				moreTableStruct[1 + j].tableName = subTableName[j]; //各实体对应的表名
 //				moreTableStruct[1 + j].entityFullName = subField[j].getType().getName();
 //				moreTableStruct[1 + j].entityName = subField[j].getType().getSimpleName();
@@ -457,7 +457,7 @@ public final class HoneyUtil {
 						}
 						moreTableStruct[1 + j].joinExpression +=firstTableName + "." + mainColumnArray[i] + "=" + useSubTableName + "." + subColumnArray[i];
 					}
-					
+
 				}
 				moreTableStruct[1 + j].useSubTableName = useSubTableName;
 				try {
@@ -482,7 +482,7 @@ public final class HoneyUtil {
 
 				if(subEntityFieldNum==1){ //subEntityFieldNum==1 只有一个从表,从表1上面都有扫描, 表示上面都有扫描过
 					                       //subEntityFieldNum==1  j也不可以等于1(不可能进行两次循环)
-			    }else if(j==0 && subOneIsList && !oneHasOne) { //从主表来的 从表1 List (主表有两个从表时)         
+			    }else if(j==0 && subOneIsList && !oneHasOne) { //从主表来的 从表1 List (主表有两个从表时)
 //					Field ff[]=list_T_classOne.getDeclaredFields();
 					subColumnStringBuffer[0] = _getBeanFullField_0(list_T_classOne, useSubTableName,entityFullName,mainFieldSet,dulMap,true);
 				}else if(j==1 && subTwoIsList) { //j==1,表示有第二个存在
@@ -493,26 +493,26 @@ public final class HoneyUtil {
 			    	subColumnStringBuffer[j] = _getBeanFullField_0(subField[j].getType(), useSubTableName,entityFullName,mainFieldSet,dulMap);
 			    }
 //			    subColumnStringBuffer[j]=listcolumns;
-				moreTableStruct[1 + j].columnsFull = subColumnStringBuffer[j].toString(); 
+				moreTableStruct[1 + j].columnsFull = subColumnStringBuffer[j].toString();
 
 				columns.append(",");
 				columns.append(subColumnStringBuffer[j]);
-				
+
 			}
 		}//end subFieldEntity for
-		
+
 		if(subOneIsList)
 		   moreTableStruct[1].subClass=list_T_classOne;
 		if(subTwoIsList)
 			   moreTableStruct[2].subClass=list_T_classTwo;
-		
+
 		moreTableStruct[0].columnsFull = columns.toString(); //包含从表的列
 		moreTableStruct[0].subDulFieldMap=dulMap;
 
 		//		return columns.toString();
 		return moreTableStruct;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	private static Class createClass(String subClassStr, String packageAndClassName) {
 		//		String subClassStr = joinTable[0].subClass();
@@ -545,7 +545,7 @@ public final class HoneyUtil {
 					+ "the object must have element or config the subClass with JoinTable Annotation!");
 		}
 	}
-	
+
 	//for moreTable
 	@SuppressWarnings("rawtypes")
 	static StringBuffer _getBeanFullField_0(Class entityClass, String tableName,String entityFullName,
@@ -556,16 +556,16 @@ public final class HoneyUtil {
 	@SuppressWarnings("rawtypes")
 	static StringBuffer _getBeanFullField_0(Class entityClass, String tableName,String entityFullName,
 			Set<String> mainFieldSet,Map<String,String> dulMap,boolean checkOneHasOne) {
-		
+
 //		Field field[] = entityField.getType().getDeclaredFields();
 		Field field[] = entityClass.getDeclaredFields();
-		
+
 //	 return	_getBeanFullField_0(field, tableName, entityFullName, mainFieldSet, dulMap, checkOneHasOne, entityField.getName());
 //	}
 //	//for moreTable
 //	static StringBuffer _getBeanFullField_0(Field field[], String tableName,String entityFullName,
 //			Set<String> mainFieldSet,Map<String,String> dulMap,boolean checkOneHasOne,String entityFieldFullName) {
-		
+
 		String entityFieldFullName=entityClass.getName();
 
 //		tableName传入的也是:useSubTableName
@@ -586,7 +586,7 @@ public final class HoneyUtil {
 			if (field[i] != null && field[i].isAnnotationPresent(JoinTable.class)) {
 				currentSubNum++;
 				if(checkOneHasOne && currentSubNum==1) subEntityFirstAnnotationField=field[i]; //第一个从表里的第一个连接字段
-				
+
 ////				Logger.error("注解字段的实体: " + entityField.getType().getName() + "里面又包含了注解:" + field[i].getType());
 //				String entityFieldName=entityField.getType().getName();
 //				
@@ -606,7 +606,7 @@ public final class HoneyUtil {
 				columns.append(",");
 			}
 			subColumnName=NameTranslateHandle.toColumnName(field[i].getName(),entityClass); //todo
-			
+
 			if (field[i].isAnnotationPresent(JustFetch.class)) {
 				columns.append(getJustFetchDefineName(field[i]));
 			} else {
@@ -614,12 +614,12 @@ public final class HoneyUtil {
 				columns.append(".");
 				columns.append(subColumnName);
 			}
-			
+
 			if(!mainFieldSet.add(subColumnName) && isConfuseDuplicateFieldDB()){
 				if (isSQLite()) {
-					dulMap.put(tableName + "." + subColumnName, tableName + "." + subColumnName); 
+					dulMap.put(tableName + "." + subColumnName, tableName + "." + subColumnName);
 				} else {
-					dulMap.put(tableName + "." + subColumnName, tableName + "_" + subColumnName + "_$"); 
+					dulMap.put(tableName + "." + subColumnName, tableName + "_" + subColumnName + "_$");
 				}
 				if (isSQLite()) {
 					columns.append(" "+K.as+" '" + tableName + "." + subColumnName+"'");
@@ -628,26 +628,26 @@ public final class HoneyUtil {
 				}
 			}
 		}
-		
+
 		if(checkOneHasOne && currentSubNum>1) {  //从表,只能有1个关联字段,  超过1个,将会被忽略.
 			subEntityFirstAnnotationField=null;
 			for (int i = 0; i < currentSubNum; i++) {
 				Logger.warn(WarnMsglist.get(i));
 			}
 		}
-		
+
 		if (checkOneHasOne && currentSubNum > 2) { //只支持一个实体里最多关联两个实体
 			throw new JoinTableException("One entity only supports two JoinTable at most! " + entityFieldFullName + " has " + currentSubNum + " JoinTable now !");
 		}
-		
+
 		OneTimeParameter.setAttribute(StringConst.SUBENTITY_FIRSTANNOTATION_FIELD, subEntityFirstAnnotationField);
-		
+
 		return columns;
 	}
-	
+
 	/**
 	 * jdbc type->java type
-	 * 将jdbc的数据类型转换为java的类型 
+	 * 将jdbc的数据类型转换为java的类型
 	 * @param jdbcType
 	 * @return the string of java type
 	 */
@@ -659,24 +659,24 @@ public final class HoneyUtil {
 
 		if (null == jdbcTypeMap.get(jdbcType)) {
 
-			//fix UNSIGNED,  like :TINYINT UNSIGNED 
+			//fix UNSIGNED,  like :TINYINT UNSIGNED
 			String tempType = jdbcType.trim();
 			if (tempType.endsWith(" UNSIGNED")) {
 				int i = tempType.indexOf(" ");
 				javaType = jdbcTypeMap.get(tempType.substring(0, i));
 				if (javaType != null) return javaType;
 			}
-			
+
 			if (javaType == null){
 				javaType =jdbcTypeMap.get(jdbcType.toLowerCase());
 				if (javaType != null) return javaType;
-				
+
 				if (javaType == null){
 					javaType =jdbcTypeMap.get(jdbcType.toUpperCase());
 					if (javaType != null) return javaType;
 				}
 			}
-			
+
 			javaType = "[UNKNOWN TYPE]" + jdbcType;
 		}
 
@@ -700,7 +700,7 @@ public final class HoneyUtil {
 
 		jdbcTypeMap.put("BIT", "Boolean");
 
-		//rs.getObject(int index)  bug   
+		//rs.getObject(int index)  bug
 		//pst.setByte(i+1,(Byte)value); break;设置查询没问题,结果也能返回,用rs.getObject拿结果时才报错
 		jdbcTypeMap.put("TINYINT", "Byte");
 		jdbcTypeMap.put("SMALLINT", "Short");
@@ -716,7 +716,7 @@ public final class HoneyUtil {
 		jdbcTypeMap.put("BINARY", "byte[]");
 		jdbcTypeMap.put("VARBINARY", "byte[]");
 		jdbcTypeMap.put("LONGVARBINARY", "byte[]");
-		
+
 		jdbcTypeMap.put("image","byte[]");
 
 		jdbcTypeMap.put("DATE", "Date");
@@ -735,7 +735,7 @@ public final class HoneyUtil {
 		jdbcTypeMap.put("TIMESTAMP_WITH_TIMEZONE", "Timestamp");
 		jdbcTypeMap.put("TIMESTAMP WITH TIME ZONE", "Timestamp"); //test in oralce 11g
 		jdbcTypeMap.put("TIMESTAMP WITH LOCAL TIME ZONE", "Timestamp");//test in oralce 11g
-		
+
 		//V1.11
 		jdbcTypeMap.put("JSON", STRING);
 		//mysql 8.0
@@ -753,8 +753,8 @@ public final class HoneyUtil {
 			jdbcTypeMap.put("TINYBLOB", "Blob");
 			jdbcTypeMap.put("MEDIUMBLOB", "Blob");
 			jdbcTypeMap.put("LONGBLOB", "Blob");
-			jdbcTypeMap.put("YEAR", "Integer"); //todo 
-			
+			jdbcTypeMap.put("YEAR", "Integer"); //todo
+
 			jdbcTypeMap.put("TINYINT", "Byte");
 			jdbcTypeMap.put("SMALLINT", "Short");
 			jdbcTypeMap.put("TINYINT UNSIGNED", "Short");
@@ -771,7 +771,7 @@ public final class HoneyUtil {
 			jdbcTypeMap.put("NUMBER", "BigDecimal"); //oracle todo
 			jdbcTypeMap.put("RAW", "byte[]");
 
-			jdbcTypeMap.put("INTERVALYM", STRING); //11g 
+			jdbcTypeMap.put("INTERVALYM", STRING); //11g
 			jdbcTypeMap.put("INTERVALDS", STRING); //11g
 			jdbcTypeMap.put("INTERVAL YEAR TO MONTH", STRING); //just Prevention
 			jdbcTypeMap.put("INTERVAL DAY TO SECOND", STRING);//just Prevention
@@ -784,22 +784,22 @@ public final class HoneyUtil {
 //			 DATETIMEOFFSET // SQL Server 2008  microsoft.sql.DateTimeOffset
 			jdbcTypeMap.put("DATETIMEOFFSET", "microsoft.sql.DateTimeOffset");
 			jdbcTypeMap.put("microsoft.sql.Types.DATETIMEOFFSET", "microsoft.sql.DateTimeOffset");
-			
+
 			jdbcTypeMap.put("datetime","Timestamp");
 			jdbcTypeMap.put("money","BigDecimal");
 			jdbcTypeMap.put("smallmoney","BigDecimal");
-			
+
 			jdbcTypeMap.put("ntext",STRING);
 			jdbcTypeMap.put("text",STRING);
 			jdbcTypeMap.put("xml",STRING);
-			
+
 			jdbcTypeMap.put("smalldatetime","Timestamp");
 			jdbcTypeMap.put("uniqueidentifier",STRING);
-			
+
 			jdbcTypeMap.put("hierarchyid","byte[]");
 			jdbcTypeMap.put("image","byte[]");
-			
-		} else if (DatabaseConst.PostgreSQL.equalsIgnoreCase(dbName)) {	
+
+		} else if (DatabaseConst.PostgreSQL.equalsIgnoreCase(dbName)) {
 
 			jdbcTypeMap.put("bigint","Long");
 			jdbcTypeMap.put("int8","Long");
@@ -809,10 +809,10 @@ public final class HoneyUtil {
 			jdbcTypeMap.put("integer","Integer");
 			jdbcTypeMap.put("int","Integer");
 			jdbcTypeMap.put("int4","Integer");
-			
+
 			jdbcTypeMap.put("serial","Integer");
 			jdbcTypeMap.put("serial4","Integer");
-			
+
 			jdbcTypeMap.put("smallint","Short");
 			jdbcTypeMap.put("int2","Short");
 			jdbcTypeMap.put("smallserial","Short");
@@ -821,7 +821,7 @@ public final class HoneyUtil {
 			jdbcTypeMap.put("money", "BigDecimal");
 			jdbcTypeMap.put("numeric", "BigDecimal");
 			jdbcTypeMap.put("decimal", "BigDecimal");
-			
+
 			jdbcTypeMap.put("bit",STRING);
 			jdbcTypeMap.put("bit varying",STRING);
 			jdbcTypeMap.put("varbit",STRING);
@@ -834,7 +834,7 @@ public final class HoneyUtil {
 
 			jdbcTypeMap.put("boolean","Boolean");
 			jdbcTypeMap.put("bool","Boolean");
-			
+
 			jdbcTypeMap.put("double precision","Double"); //prevention
 			jdbcTypeMap.put("float8","Double");
 
@@ -861,13 +861,13 @@ public final class HoneyUtil {
 			jdbcTypeMap.put("timestamp without time zone","Timestamp");
 			jdbcTypeMap.put("timestamptz","Timestamp");
 
-		} else if (DatabaseConst.H2.equalsIgnoreCase(dbName) 
+		} else if (DatabaseConst.H2.equalsIgnoreCase(dbName)
 			    || DatabaseConst.SQLite.equalsIgnoreCase(dbName)) {
 			jdbcTypeMap.put("MEDIUMINT", "Integer");
 			jdbcTypeMap.put("INT4", "Integer");
 			jdbcTypeMap.put("INT2", "Short");
 			jdbcTypeMap.put("INT8", "Long");
-			
+
 			jdbcTypeMap.put("NUMBER", "BigDecimal");
 			jdbcTypeMap.put("NUMERIC", "BigDecimal");
 
@@ -882,54 +882,54 @@ public final class HoneyUtil {
 			jdbcTypeMap.put("VARCHAR2", STRING);
 			jdbcTypeMap.put("NVARCHAR2", STRING);
 			jdbcTypeMap.put("VARCHAR_IGNORECASE", STRING);
-		} 
-		
+		}
+
 //		else if (DatabaseConst.H2.equalsIgnoreCase(dbName)) {  // can not use elseif again.
 		if (DatabaseConst.H2.equalsIgnoreCase(dbName)) {
-			
+
 			//	/h2/docs/html/datatypes.html#real_type
 			jdbcTypeMap.put("SIGNED", "Integer");
 			jdbcTypeMap.put("DEC", "BigDecimal");
 			jdbcTypeMap.put("YEAR", "Byte");
 			jdbcTypeMap.put("BINARY VARYING", "byte[]");
 			jdbcTypeMap.put("WITHOUT TIME ZONE", "Time");
-			
+
 			jdbcTypeMap.put("BINARY LARGE OBJECT","Blob");     //java.sql.Blob
 			jdbcTypeMap.put("CHARACTER LARGE OBJECT","Clob");  //java.sql.Clob
-			
-			jdbcTypeMap.put("CHARACTER VARYING",STRING); 
-			jdbcTypeMap.put("VARCHAR_CASESENSITIVE",STRING); 
-			jdbcTypeMap.put("VARCHAR_IGNORECASE",STRING); 
-			
+
+			jdbcTypeMap.put("CHARACTER VARYING",STRING);
+			jdbcTypeMap.put("VARCHAR_CASESENSITIVE",STRING);
+			jdbcTypeMap.put("VARCHAR_IGNORECASE",STRING);
+
 		}else if (DatabaseConst.SQLite.equalsIgnoreCase(dbName)) {
-			
+
 			jdbcTypeMap.put("VARYING CHARACTER", STRING);
 			jdbcTypeMap.put("NATIVE CHARACTER", STRING);
 			jdbcTypeMap.put("TEXT", STRING);
 			jdbcTypeMap.put("DOUBLE PRECISION", "Double");
-			
+
 			jdbcTypeMap.put("DATETIME", STRING);
 			jdbcTypeMap.put("INTEGER", "Long");  // INTEGER  PRIMARY key
-			
+
 			jdbcTypeMap.put("UNSIGNED BIG INT", "Long");
-			
+
 			jdbcTypeMap.put("VARYING", STRING);
 		}
-		
+
 		//V1.11
 		if (DatabaseConst.Cassandra.equalsIgnoreCase(dbName)) {
 			jdbcTypeMap.put("ascii", STRING);
 			jdbcTypeMap.put("inet", STRING);
 			jdbcTypeMap.put("timeuuid", "java.util.UUID");
 			jdbcTypeMap.put("uuid", "java.util.UUID");
-			
+
 			jdbcTypeMap.put("boolean", "Boolean");
 			jdbcTypeMap.put("varint", "Integer");
-			
+
 //			jdbcTypeMap.put("list", "java.util.List");
 //			jdbcTypeMap.put("set", "java.util.Set");
 //			jdbcTypeMap.put("map", "java.util.Map");
-			
+
 			jdbcTypeMap.put("list", "List");
 			jdbcTypeMap.put("set", "Set");
 			jdbcTypeMap.put("map", "Map");
@@ -958,9 +958,9 @@ public final class HoneyUtil {
 		javaTypeMap.put("java.lang.Short", 6);
 		javaTypeMap.put("java.lang.Byte", 7);
 //		javaTypeMap.put("[Ljava.lang.Byte;", 8); //  Byte[]
-		javaTypeMap.put("[B", 8); //byte[]  
+		javaTypeMap.put("[B", 8); //byte[]
 		javaTypeMap.put("java.lang.Boolean", 9);
-		
+
 		//支持原生类型
 		javaTypeMap.put("int", 2);
 		javaTypeMap.put("long", 3);
@@ -974,7 +974,7 @@ public final class HoneyUtil {
 
 		javaTypeMap.put("java.sql.Date", 11);
 		javaTypeMap.put("java.sql.Time", 12);
-		
+
 		javaTypeMap.put("java.sql.Timestamp", 13);
 		if(isSQLite()) {
 //		  javaTypeMap.put("java.sql.Timestamp", 3); //V1.11 fixed SQLite bug.  SQLite 需要用Long获取Timestamp    Long只获取到年份.
@@ -982,7 +982,7 @@ public final class HoneyUtil {
 //		  javaTypeMap.put("java.sql.Timestamp", 1); //设置参数时,是可以不用转的
 		  TypeHandlerRegistry.register(Timestamp.class, new TimestampTypeHandler<Timestamp>(),DatabaseConst.SQLite);
 		}
-		
+
 		javaTypeMap.put("java.sql.Blob", 14);
 		javaTypeMap.put("java.sql.Clob", 15);
 
@@ -991,21 +991,21 @@ public final class HoneyUtil {
 		javaTypeMap.put("java.sql.SQLXML", 18);
 
 		javaTypeMap.put("java.math.BigInteger", 19);
-		
+
 		javaTypeMap.put("char", 20);
-		javaTypeMap.put("java.util.Date", 21);  
-		
+		javaTypeMap.put("java.util.Date", 21);
+
 		javaTypeMap.put("java.sql.Array", 22);
 		javaTypeMap.put("java.io.InputStream", 23);
 		javaTypeMap.put("java.io.Reader", 24);
 		javaTypeMap.put("java.sql.Ref", 25);
-		
+
 //	    javaTypeMap.put("org.teasoft.bee.osql.annotation.customizable.Json", 26);
-		
+
 		javaTypeMap.put("java.net.URL", 27);
-		
+
 //		javaTypeMap.put("java.util.UUID", 28);  //1 todo
-			
+
 	}
 
 	public static int getJavaTypeIndex(String javaType) {
@@ -1027,15 +1027,15 @@ public final class HoneyUtil {
 		}
 
 		//exclude:  NULL and "" and "  "
-		if(-3==includeType && StringUtils.isBlank((String)object)) { 
+		if(-3==includeType && StringUtils.isBlank((String)object)) {
 			 return true;
 		}
-		
+
 //		includeType == NullEmpty.EMPTY_STRING && object == null  要包括空字符,但对象不是空字符,而是null,则跳过.
 		return (((includeType == NullEmpty.EXCLUDE || includeType == NullEmpty.EMPTY_STRING) && object == null)
 				|| ((includeType == NullEmpty.EXCLUDE || includeType == NullEmpty.NULL) && "".equals(object)) );
 	}
-	
+
 	public static boolean isSkipField(Field field) {
 		if (field != null) {
 			if ("serialVersionUID".equals(field.getName())) return true;
@@ -1045,7 +1045,7 @@ public final class HoneyUtil {
 		}
 		return false;
 	}
-	
+
 	static boolean isSkipFieldForMoreTable(Field field) {
 		if (field != null) {
 			if ("serialVersionUID".equals(field.getName())) return true;
@@ -1053,10 +1053,10 @@ public final class HoneyUtil {
 //			if (field.isAnnotationPresent(JoinTable.class)) return true;
 			if (field.isSynthetic()) return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	public static boolean isSkipFieldJustFetch(Field field) {
 		if (field != null) {
 			if (field.isAnnotationPresent(JustFetch.class)) return true;
@@ -1065,7 +1065,7 @@ public final class HoneyUtil {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param pst PreparedStatement
 	 * @param objTypeIndex
 	 * @param i  prarmeter index
@@ -1141,7 +1141,7 @@ public final class HoneyUtil {
 			case 20:
 				pst.setString(i + 1, value.toString());
 				break;
-				
+
 //	             process in define SetParaTypeConvert
 //			case 21:
 //				Date d= new Date(((java.util.Date)value).getTime());
@@ -1149,11 +1149,11 @@ public final class HoneyUtil {
 //				pst.setObject(i + 1, d); //ok
 //				//测试数据库是date,datetime,timestamp是否都可以
 //				break;
-				
-			case 22:	
+
+			case 22:
 				pst.setArray(i + 1, (java.sql.Array)value);
 				break;
-				
+
 //			case 23,24
 				//InputStream,Reader can define the SetParaTypeConvert for them.
 //				pst.setAsciiStream(parameterIndex, java.io.InputStream x);
@@ -1161,11 +1161,11 @@ public final class HoneyUtil {
 //				pst.setCharacterStream(parameterIndex, reader);
 //				pst.setNCharacterStream(parameterIndex, reader);
 //				pst.setUnicodeStream(parameterIndex, x, length);
-				
+
 			case 25:
 				pst.setRef(i + 1, (Ref)value);
 				break;
-				
+
 			case 26:  //Json Annotation
 			{
 				SetParaTypeConvert converter = SetParaTypeConverterRegistry.getConverter(Json.class);
@@ -1174,13 +1174,13 @@ public final class HoneyUtil {
 					break;
 				}
 			}
-			
+
 			case 27:
 				pst.setURL(i + 1, (java.net.URL)value);
 				break;
-				
+
 //				pst.setUnicodeStream(parameterIndex, x, length);
-			
+
 //			case 28:   //2 todo
 //				UUID u=(UUID)value;
 //				pst.setObject(i + 1, u.toString());
@@ -1188,24 +1188,24 @@ public final class HoneyUtil {
 //				pst.setObject(i + 1, u);  
 //				pst.setObject(i + 1, u, targetSqlType);
 //				break;
-			
+
 			case 19:
 //	        	pst.setBigInteger(i+1, (BigInteger)value);break;
 			default:
 			{
 //				value=tryConvert(value);
 //				pst.setObject(i + 1, value);
-				
+
 //				先查找是否有对应类型的转换器;  到这里value不会是null;前面已处理
 				SetParaTypeConvert converter = SetParaTypeConverterRegistry.getConverter(value.getClass()); //fixed bug
 				if (converter != null) {
 					value = converter.convert(value);
 					pst.setObject(i + 1, value);
-					
-				//if did not define SetParaTypeConvert,will process by default	
+
+				//if did not define SetParaTypeConvert,will process by default
 				}else if(objTypeIndex==11) {
 					pst.setDate(i + 1, (Date) value);
-				}else if(objTypeIndex==14) {	
+				}else if(objTypeIndex==14) {
 					pst.setBlob(i + 1, (Blob) value);
 				}else if(objTypeIndex==15) {
 					pst.setClob(i + 1, (Clob) value);
@@ -1218,11 +1218,11 @@ public final class HoneyUtil {
 			    }else {
 			    	pst.setObject(i + 1, value);
 			    }
-				
+
 			}
 		} //end switch
 	}
-	
+
 //	private static Object tryConvert(Object value) {
 //		if (value == null) return value;
 //		return SetParaTypeConverterRegistry.converterProcess(value.getClass(), value);
@@ -1272,12 +1272,12 @@ public final class HoneyUtil {
 				return rs.getRowId(columnName);
 			case 18:
 				return rs.getSQLXML(columnName);
-				
+
 //				19: BigInteger
 //				20:char
-				
+
 //				 21:java.util.Date 
-			case 21:	
+			case 21:
 				return rs.getTimestamp(columnName);//改动态???
 			case 22:
 				return rs.getArray(columnName);  //java.sql.Array
@@ -1286,13 +1286,13 @@ public final class HoneyUtil {
 			case 24:
 				return rs.getCharacterStream(columnName); //java.io.Reader
 			case 25:
-				return rs.getRef(columnName);  //java.sql.Ref	
-				
+				return rs.getRef(columnName);  //java.sql.Ref
+
 //			26:	annotation.customizable.Json
-				
+
 			case 27:
 				return rs.getURL(columnName);
-				
+
 			case 19:
 //	        	no  getBigInteger
 			default:
@@ -1345,15 +1345,15 @@ public final class HoneyUtil {
 				return rs.getRowId(index);
 			case 18:
 				return rs.getSQLXML(index);
-				
+
 //				19:BigInteger
 //				20:char
-				
+
 //				 21:java.util.Date 
-			case 21:	
+			case 21:
 				return rs.getTimestamp(index);//改动态???
 //				return rs.getDate(index);  //Oracle 使用该方法获取会丢失:时分秒
-				
+
 			case 22:
 				return rs.getArray(index);  //java.sql.Array
 			case 23:
@@ -1365,14 +1365,14 @@ public final class HoneyUtil {
 //				return rs.getNString(index);  //java.lang.String
 			case 25:
 				return rs.getRef(index);  //java.sql.Ref
-				
+
 //				26:	annotation.customizable.Json
 
 			case 27:
 				return rs.getURL(index);
-				
+
 			case 19:
-				//no  getBigInteger	
+				//no  getBigInteger
 			default:
 				return rs.getObject(index);
 		} //end switch
@@ -1398,10 +1398,10 @@ public final class HoneyUtil {
 
 	public static <T> void checkPackage(T entity) {
 		if (entity == null) return;
-		
+
 //		if(entity.getClass().getPackage()==null) return ; //2020-04-19 if it is default package or empty package, do not check. Suggest by:pcode
 //		String packageName = entity.getClass().getPackage().getName();
-		
+
 		String classFullName=entity.getClass().getName();
 		//		传入的实体可以过滤掉常用的包开头的,如:java., javax. ; 但spring开头不能过滤,否则spring想用bee就不行了.
 		if (classFullName.startsWith("java.") || classFullName.startsWith("javax.")) {
@@ -1431,22 +1431,22 @@ public final class HoneyUtil {
 
 		return map;
 	}
-	
+
 	//List<PreparedValue>  to valueBuffer
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static String list2Value(List<PreparedValue> list,boolean needType){
 		StringBuffer b=new StringBuffer();
 		if(list==null ) return null;
 		if(list.size()==0) return "";
-		
+
 		String type="";
-		
+
 		int size=list.size();
 		Object value=null;
 		for (int j = 0; j < size; j++) {
-			
+
 			value=list.get(j).getValue();
-			
+
 			//V1.11
 			Field f = list.get(j).getField();
 			if (f != null) {
@@ -1455,12 +1455,12 @@ public final class HoneyUtil {
 					value = converter.convert(value);
 				}
 			}
-			
+
 			b.append(value);
 			type=list.get(j).getType();
 			if(needType && type !=null) {
 				b.append("(");
-				
+
 				if(type.startsWith("java.lang.")){
 					b.append(type.substring(10));
 				}else{
@@ -1470,10 +1470,10 @@ public final class HoneyUtil {
 			}
 			if(j!=size-1) b.append(",");
 		}
-		
+
 		return b.toString();
 	}
-	
+
 
 	/**
 	 *  ! just use in debug env.  please set off in prod env.
@@ -1484,7 +1484,7 @@ public final class HoneyUtil {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static String getExecutableSql(String sql, List<PreparedValue> list){
 		if(list==null || list.size()==0) return sql;
-		
+
 		int size=list.size();
 		Object value=null;
 		for (int j = 0; j < size; j++) {
@@ -1497,21 +1497,23 @@ public final class HoneyUtil {
 					value = converter.convert(value);
 				}
 			}
-			
+
 			if(value!=null && value instanceof CharSequence) { //V1.11
 				sql=sql.replaceFirst("\\?", "'"+String.valueOf(value).replace("$", "\\$")+"'"); //bug 2021-05-25
-			}else {
+			}else if (value != null && value instanceof java.util.Date) {
+				sql = sql.replaceFirst("\\?", "'" + String.valueOf(value).replace("$", "\\$") + "'"); //bug 2021-05-25
+			} else {
 				sql=sql.replaceFirst("\\?", String.valueOf(value));
 			}
 		}
-		
+
 		return sql;
 	}
-	
+
 	static <T> String checkAndProcessSelectField(T entity, String ...fieldList) {
 
 		if (fieldList == null) return null;
-		
+
 		String packageAndClassName=entity.getClass().getName();
 		String columnsdNames=HoneyContext.getBeanField(packageAndClassName);
 		if (columnsdNames == null) {
@@ -1522,11 +1524,11 @@ public final class HoneyUtil {
 
 		return checkAndProcessSelectFieldViaString(columnsdNames, null, fieldList);
 	}
-	 
+
 	 static String checkAndProcessSelectFieldViaString(String columnsdNames,Map<String,String> subDulFieldMap,String ...fields){
-			
+
 		if (fields == null) return null;
-		 
+
 //		Field fields[] = entity.getClass().getDeclaredFields();
 //		String packageAndClassName = entity.getClass().getName();
 //		String columnsdNames = HoneyContext.getBeanField(packageAndClassName);
@@ -1534,13 +1536,13 @@ public final class HoneyUtil {
 //			columnsdNames = HoneyUtil.getBeanField(fields);//获取属性名对应的DB字段名
 //			HoneyContext.addBeanField(packageAndClassName, columnsdNames);
 //		}
-		
+
 		columnsdNames=columnsdNames.toLowerCase();//不区分大小写检测
 
 		String errorField = "";
 		boolean isFirstError = true;
 		String selectFields[];
-		
+
 		if (fields.length == 1) { //变长参数,只有一个时,才允许用逗号隔开
 			selectFields = fields[0].split(",");
 		} else {
@@ -1556,11 +1558,11 @@ public final class HoneyUtil {
 			checkColName=colName.toLowerCase();
 //			if(isMoreTable){  //带有点一样转换
 //			}
-			
+
 //			if (!columnsdNames.contains(colName)) {
-			if(!(  
-			     columnsdNames.contains(","+checkColName+",") || columnsdNames.startsWith(checkColName+",") 
-			  || columnsdNames.endsWith(","+checkColName) ||  columnsdNames.equals(checkColName) 
+			if(!(
+			     columnsdNames.contains(","+checkColName+",") || columnsdNames.startsWith(checkColName+",")
+			  || columnsdNames.endsWith(","+checkColName) ||  columnsdNames.equals(checkColName)
 			  || columnsdNames.contains("."+checkColName+",")  || columnsdNames.endsWith("."+checkColName)
 			  || columnsdNames.contains(","+checkColName+" ") || columnsdNames.startsWith(checkColName+" ")  //取别名
 			  || columnsdNames.contains("."+checkColName+" ") //取别名
@@ -1572,7 +1574,7 @@ public final class HoneyUtil {
 					errorField += "," + s;
 				}
 			}
-			
+
 			String newField;
 			if (subDulFieldMap == null) {
 				newField=null;
@@ -1596,11 +1598,11 @@ public final class HoneyUtil {
 		}//end for
 
 		if (!"".equals(errorField)) throw new BeeErrorFieldException("ErrorField: " + errorField);
-		
+
 		if("".equals(newSelectFields.trim())) return null;
-		
+
 		return newSelectFields;
-	} 
+	}
 
 	private static String _toColumnName(String fieldName) {
 		return NameTranslateHandle.toColumnName(fieldName);
@@ -1617,10 +1619,10 @@ public final class HoneyUtil {
 	private static String checkJoinTable(JoinTable joinTable) {
 		String mainField= joinTable.mainField();
 		String subField=joinTable.subField();
-		
+
 		String subAlias=joinTable.subAlias();
 		String subClass=joinTable.subClass();
-		
+
 		if (NameCheckUtil.isIllegal(mainField)) {
 			throw new JoinTableParameterException(SET_WRONG_VALUE_IN+"mainField:" + mainField);
 		}
@@ -1633,10 +1635,10 @@ public final class HoneyUtil {
 		if (NameCheckUtil.isIllegal(subClass)) {
 			throw new JoinTableParameterException(SET_WRONG_VALUE_IN+"subClass:" + subClass);
 		}
-		
+
 		String errorMsg = "";
 		int errorCount=0;
-		
+
 		if (mainField == null) {
 			errorMsg = "mainField is null! ";
 			errorCount++;
@@ -1656,20 +1658,20 @@ public final class HoneyUtil {
 		    return errorMsg;
         else return "";
 	}
-	
+
 	public static boolean isMysql() {
 //		return false;    //test  用来测HoneyContext.justGetPreparedValue("abc"); 检查是否还有元素,  不准确
-		return    DatabaseConst.MYSQL.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName()) 
+		return    DatabaseConst.MYSQL.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName())
 			   || DatabaseConst.MariaDB.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
-	
+
 	//oracle,SQLite
 	public static boolean isConfuseDuplicateFieldDB(){
 		return DatabaseConst.ORACLE.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName())
 			|| DatabaseConst.SQLite.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName())
 				;
 	}
-	
+
 	public static boolean isSQLite() {
 		return DatabaseConst.SQLite.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
@@ -1677,24 +1679,24 @@ public final class HoneyUtil {
 	public static boolean isSqlServer() {
 		return DatabaseConst.SQLSERVER.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
-	
+
 	public static boolean isOracle(){
 		return DatabaseConst.ORACLE.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
-	
+
 	public static boolean isCassandra(){
 		return DatabaseConst.Cassandra.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
-	
+
 	public static boolean isHbase(){
 		return DatabaseConst.Hbase.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
-	
+
 	public static boolean isMongoDB(){
 		return DatabaseConst.MongoDB.equalsIgnoreCase(HoneyConfig.getHoneyConfig().getDbName());
 	}
-	
-	
+
+
 	public static void setPageNum(List<PreparedValue> list) {
 		int array[] = (int[]) OneTimeParameter.getAttribute("_SYS_Bee_Paing_NumArray");
 		for (int i = 0; array != null && i < array.length; i++) {
@@ -1722,12 +1724,12 @@ public final class HoneyUtil {
 	public static void regPageNumArray(int array[]) {
 		OneTimeParameter.setAttribute("_SYS_Bee_Paing_NumArray", array);
 	}
-	
+
 	public static boolean isSqlKeyWordUpper() {
 		String kwCase = HoneyConfig.getHoneyConfig().sqlKeyWordCase;
 		return "upper".equalsIgnoreCase(kwCase) ? true : false;
 	}
-	
+
 	public static <T> Object getIdValue(T entity) {
 		Field field = null;
 		Object obj = null;
@@ -1735,7 +1737,7 @@ public final class HoneyUtil {
 			field = entity.getClass().getDeclaredField("id");
 		} catch (NoSuchFieldException e) {
 			String pkName = getPkFieldName(entity);
-			
+
 			boolean hasException = false;
 			if ("".equals(pkName)) {
 				hasException = true;
@@ -1763,7 +1765,7 @@ public final class HoneyUtil {
 
 		return obj;
 	}
-	
+
 	public static <T> void revertId(T entity) {
 		Field field = null;
 		if (OneTimeParameter.isTrue(StringConst.OLD_ID_EXIST)) {
@@ -1780,7 +1782,7 @@ public final class HoneyUtil {
 			}
 		}
 	}
-	
+
 	public static <T> void revertId(T entity[]) {
 		Field field = null;
 		String pkName=(String)OneTimeParameter.getAttribute(StringConst.Primary_Key_Name);
@@ -1800,12 +1802,12 @@ public final class HoneyUtil {
 			}
 		}
 	}
-	
+
 	static <T> String getPkFieldName(T entity) {
 		if (entity == null) return null;
 		return getPkFieldNameByClass(entity.getClass());
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	static String getPkFieldNameByClass(Class c) {
 
@@ -1830,12 +1832,12 @@ public final class HoneyUtil {
 				pkey += field[i].getName();
 			}
 		} //end for
-		
+
 		HoneyContext.addBeanCustomPKey(classFullName,pkey);
 
 		return pkey;
 	}
-	
+
 	public static String getPlaceholderValue(int size) {
 		StringBuffer placeholderValue = new StringBuffer(" (");
 		for (int i = 0; i < size; i++) {
@@ -1844,7 +1846,7 @@ public final class HoneyUtil {
 		}
 		if(size<=0) placeholderValue.append("''");
 		placeholderValue.append(")");
-		
+
 		return placeholderValue.toString();
 	}
 
